@@ -1,3 +1,6 @@
 .env
 chroma_db/
 temp.pdf
+__pycache__/
+*.pyc
+venv/
