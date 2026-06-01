@@ -49,7 +49,15 @@ if uploaded_file:
             llm = ChatGroq(model="llama-3.3-70b-versatile")
             prompt = f"""Use the following context to answer this question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer:"""
             response = llm.invoke(prompt)
-        st.session_state.chat_history.append({"question": question, "answer": response.content})
+        sources = list(set([
+            f"Page {chunk.metadata.get('page', 0) + 1}"
+            for chunk in relevant_chunks
+        ]))
+        st.session_state.chat_history.append({
+            "question": question,
+            "answer": response.content,
+            "sources": sources
+        })
 
     if st.session_state.chat_history:
         st.divider()
@@ -57,6 +65,7 @@ if uploaded_file:
         for chat in st.session_state.chat_history:
             st.markdown(f"**🧑 You:** {chat['question']}")
             st.markdown(f"**🤖 DocuMind:** {chat['answer']}")
+            st.caption(f"📄 Sources: {', '.join(chat['sources'])}")
             st.divider()
 
     if st.button("🗑️ Clear Chat"):
