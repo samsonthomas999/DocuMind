@@ -12,33 +12,37 @@ st.title("🧠 DocuMind")
 st.markdown("Ask questions from your PDF documents")
 st.divider()
 
-if "processed_file" not in st.session_state:
-    st.session_state.processed_file = None
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = None
 if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-uploaded_file = st.file_uploader("Upload your PDF", type="pdf")
+uploaded_files = st.file_uploader("Upload your PDFs", type="pdf", accept_multiple_files=True)
 
-if uploaded_file:
-    with open("temp.pdf", "wb") as f:
-        f.write(uploaded_file.read())
-    st.success("✅ File Uploaded Successfully!")
+if uploaded_files:
+    file_names = sorted([f.name for f in uploaded_files])
 
-    if st.session_state.processed_file == uploaded_file.name:
+    if st.session_state.processed_files == file_names:
         st.info("⚡ Already processed! Using existing data.")
     else:
-        with st.spinner("Processing PDF..."):
-            chunks = load_and_chunk("temp.pdf")
+        with st.spinner("Processing PDFs..."):
+            all_chunks = []
+            for uploaded_file in uploaded_files:
+                with open(uploaded_file.name, "wb") as f:
+                    f.write(uploaded_file.read())
+                chunks = load_and_chunk(uploaded_file.name)
+                all_chunks = all_chunks + chunks
+
             embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-            vectorstore = FAISS.from_documents(chunks, embeddings)
-            st.session_state.processed_file = uploaded_file.name
+            vectorstore = FAISS.from_documents(all_chunks, embeddings)
+            st.session_state.processed_files = file_names
             st.session_state.vectorstore = vectorstore
-        st.success("✅ PDF processed and ready!")
+        st.success(f"✅ {len(uploaded_files)} PDF(s) processed and ready!")
 
     with st.form(key="question_form", clear_on_submit=True):
-        question = st.text_input("Ask a question about your PDF:")
+        question = st.text_input("Ask a question about your PDFs:")
         submitted = st.form_submit_button("Ask")
 
     if submitted and question:
