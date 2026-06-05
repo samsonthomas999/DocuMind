@@ -8,6 +8,28 @@ from dotenv import load_dotenv
 load_dotenv()
 
 st.set_page_config(page_title="DocuMind", page_icon="🧠", layout="centered")
+
+# ── Sidebar ──────────────────────────────────────
+st.sidebar.title("📁 DocuMind")
+st.sidebar.markdown("Upload your PDFs below")
+st.sidebar.divider()
+
+uploaded_files = st.sidebar.file_uploader(
+    "Upload your PDFs",
+    type="pdf",
+    accept_multiple_files=True
+)
+
+if uploaded_files:
+    st.sidebar.divider()
+    st.sidebar.markdown("**📄 Loaded Files:**")
+    for f in uploaded_files:
+        st.sidebar.caption(f"✅ {f.name}")
+
+st.sidebar.divider()
+st.sidebar.markdown("Built with LangChain, FAISS & Groq")
+
+# ── Main Area ─────────────────────────────────────
 st.title("🧠 DocuMind")
 st.markdown("Ask questions from your PDF documents")
 st.divider()
@@ -18,8 +40,6 @@ if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-
-uploaded_files = st.file_uploader("Upload your PDFs", type="pdf", accept_multiple_files=True)
 
 if uploaded_files:
     file_names = sorted([f.name for f in uploaded_files])
@@ -47,7 +67,7 @@ if uploaded_files:
 
     if submitted and question:
         with st.spinner("Thinking..."):
-            retriever = st.session_state.vectorstore.as_retriever(search_kwargs={"k": 5})
+            retriever = st.session_state.vectorstore.as_retriever(search_kwargs={"k": 10})
             relevant_chunks = retriever.invoke(question)
             context = "\n\n".join([chunk.page_content for chunk in relevant_chunks])
             llm = ChatGroq(model="llama-3.3-70b-versatile")
@@ -75,3 +95,6 @@ if uploaded_files:
     if st.button("🗑️ Clear Chat"):
         st.session_state.chat_history = []
         st.rerun()
+
+else:
+    st.info("👈 Upload a PDF from the sidebar to get started!")
