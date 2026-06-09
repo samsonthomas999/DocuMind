@@ -74,7 +74,7 @@ if uploaded_files:
             prompt = f"""Use the following context to answer this question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer:"""
             response = llm.invoke(prompt)
         sources = list(set([
-            f"Page {chunk.metadata.get('page', 0) + 1}"
+            f"{chunk.metadata.get('source', 'Unknown')} - Page {chunk.metadata.get('page', 0) + 1}"
             for chunk in relevant_chunks
         ]))
         st.session_state.chat_history.append({
